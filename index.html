@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#030712">
+    <title>Thunder Loop — Classic Arcade Vertical Shmup</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="appContainer">
+        <!-- Desktop Left Bezel: Mission Intel & Controls -->
+        <aside class="arcade-bezel">
+            <div>
+                <div class="bezel-title">⚡ Thunder Loop Intel</div>
+                <div class="bezel-box">
+                    <h4>Tactical Briefing</h4>
+                    <p>Hostile forces have seized 8 fortified regions. Pilot your prototype interceptor through enemy lines to break their command center. Complete all 8 stages to enter <strong>Loop 2</strong>!</p>
+                </div>
+                <div class="bezel-box">
+                    <h4>Desktop Controls</h4>
+                    <p><span class="key-badge">▲▼◄►</span> or <span class="key-badge">WASD</span> Move</p>
+                    <p><span class="key-badge">Z</span> or <span class="key-badge">SPACE</span> Fire Cannon</p>
+                    <p><span class="key-badge">B</span> or <span class="key-badge">X</span> Screen-Clear Bomb</p>
+                    <p><span class="key-badge">P</span> / <span class="key-badge">ESC</span> Pause Mission</p>
+                </div>
+                <div class="bezel-box">
+                    <h4>Mobile / iPhone Controls</h4>
+                    <p>• <strong>Adaptive Neutral Pose:</strong> Flat, upright, or any angle in between sets 0-drift neutral pose at start.</p>
+                    <p>• <strong>3° Deadzone / 25° Max Speed:</strong> Natural tilt sensitivity curve.</p>
+                    <p>• <strong>Auto-Recalibrate:</strong> Recalibrates every time you resume from pause, or tap "RECALIBRATE TILT".</p>
+                    <p>• <strong>Locked Screen:</strong> Orientation locked to portrait during play.</p>
+                    <p>• <strong>Steering Toggle:</strong> Switch between Tilt and Touch-Drag steering in Settings.</p>
+                    <p>• Double-tap or 2 fingers for Mega Bomb.</p>
+                </div>
+            </div>
+            <div style="font-size: 11px; text-align: center; color: #64748b;">
+                1CC (One Coin Clear) Inspired by PCE 雷電
+            </div>
+        </aside>
+
+        <!-- Center Arcade Cabinet Frame -->
+        <main id="cabinetWrapper" class="crt-disabled">
+            <div id="canvasWrapper">
+                <!-- Main HTML5 60 FPS Canvas (720x1080 High-Definition) -->
+                <canvas id="gameCanvas" width="720" height="1080"></canvas>
+
+                <!-- CRT Scanlines & Vignette Filter Overlay -->
+                <div class="crt-overlay" id="crtOverlay"></div>
+
+                <!-- Live Game Heads-Up Display (HUD) -->
+                <div id="hudOverlay">
+                    <div class="hud-row-top">
+                        <div class="hud-score-box">
+                            <span class="hud-label">1UP SCORE</span>
+                            <span class="hud-val" id="hudScore">0000000</span>
+                        </div>
+                        <div class="hud-score-box" style="align-items: center;">
+                            <span class="hud-label">HIGH SCORE</span>
+                            <span class="hud-val" id="hudHighScore">0050000</span>
+                        </div>
+                        <div class="hud-score-box" style="align-items: flex-end;">
+                            <span class="hud-label">STAGE</span>
+                            <span class="hud-val" id="hudStage" style="color: var(--neon-blue);">STAGE 1</span>
+                        </div>
+                    </div>
+
+                    <div class="hud-row-mid">
+                        <span id="hudWeapon">VULCAN Lv.1</span>
+                        <span id="hudMedal">MEDAL: 100 (0)</span>
+                        <span id="hudRank">RANK: 50%</span>
+                    </div>
+
+                    <div class="hud-row-bottom">
+                        <div>
+                            <span class="hud-label">SHIPS:</span>
+                            <span class="hud-stock" id="hudLives" style="color: #ef4444;">✈✈✈</span>
+                        </div>
+                        <div>
+                            <span class="hud-label">BOMBS:</span>
+                            <span class="hud-stock" id="hudBombs" style="color: #22c55e;">💣💣💣</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="btnPause" aria-label="Pause Game">⏸</button>
+
+                <!-- Screen 1: Title Screen -->
+                <div class="screen-modal" id="screenTitle">
+                    <h1 class="game-title">THUNDER LOOP</h1>
+                    <div class="game-subtitle">RAIDEN-STYLE VERTICAL SHOOTER</div>
+
+                    <button class="arcade-btn btn-gold" id="btnStartGame">START MISSION</button>
+                    <button class="arcade-btn" id="btnDifficulty">DIFFICULTY: NORMAL</button>
+                    <button class="arcade-btn" id="btnToggleSteeringTitle">STEERING: TILT (GYRO)</button>
+                    <button class="arcade-btn" id="btnPracticeMode">PRACTICE MODE</button>
+                    <button class="arcade-btn" id="btnHowToPlay">HOW TO PLAY</button>
+                    <button class="arcade-btn" id="btnToggleCrt">CRT FILTER: OFF</button>
+                    <button class="arcade-btn" id="btnToggleSound">AUDIO: ON</button>
+
+                    <div class="mobile-help-text">
+                        Desktop: Arrow / WASD (Move) + Z / Space (Fire) + B / X / Right-Click (Bomb)<br>
+                        iPhone: Adaptive Tilt Steering (Any angle, 3° deadzone, 25° max) • Tap/Resume Recalibrates • Double-tap Bomb
+                    </div>
+                    <div id="audioUnlockBanner">🔊 TAP ANYWHERE TO ENGAGE ENGINES</div>
+                </div>
+
+                <!-- Screen 2: Practice Mode / Stage Select -->
+                <div class="screen-modal hidden" id="screenPractice">
+                    <h2 style="color: var(--neon-yellow); margin-bottom: 8px;">PRACTICE SIMULATOR</h2>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Replay any stage you have reached to practice boss patterns!</p>
+                    <div id="practiceStageButtons" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px;">
+                        <!-- Generated dynamically based on unlocked stages -->
+                    </div>
+                    <button class="arcade-btn" id="btnBackFromPractice">BACK TO TITLE</button>
+                </div>
+
+                <!-- Screen 3: How to Play Modal -->
+                <div class="screen-modal hidden" id="screenHowToPlay">
+                    <h2 style="color: var(--neon-blue); margin-bottom: 12px;">SYSTEM INSTRUCTIONS</h2>
+                    <div style="text-align: left; font-size: 12px; line-height: 1.6; max-width: 340px; margin-bottom: 16px;">
+                        <p><strong>🎯 Precision Cockpit Hitbox:</strong> Only your central cockpit takes damage, allowing you to weave through tight bullet patterns.</p>
+                        <p><strong>🔴 Red Vulcan:</strong> Wide fan (up to 5 streams). Best for aircraft and swarms.</p>
+                        <p><strong>🔵 Blue Laser:</strong> Piercing beam. Penetrates lines of armor and melts bosses.</p>
+                        <p><strong>🟡 Homing Missiles:</strong> Target off-axis enemies while you focus on dodging.</p>
+                        <p><strong>🏅 Medal Chaining:</strong> Don't let medals fall off screen to grow medal bonuses up to 10,000 pts!</p>
+                        <p><strong>🏆 1CC Badge:</strong> Complete both loops without using a continue!</p>
+                    </div>
+                    <button class="arcade-btn" id="btnCloseHowTo">RETURN</button>
+                </div>
+
+                <!-- Screen 4: Stage Clear Summary -->
+                <div class="screen-modal hidden" id="screenStageClear">
+                    <h2 style="color: var(--neon-green); margin-bottom: 12px;" id="scStageName">STAGE 1 CLEAR!</h2>
+                    <table class="stats-table">
+                        <tr>
+                            <td>NO-DEATH BONUS:</td>
+                            <td id="scNoDeathBonus">+50,000</td>
+                        </tr>
+                        <tr>
+                            <td>BOMB STOCK BONUS:</td>
+                            <td id="scBombBonus">+30,000</td>
+                        </tr>
+                        <tr style="border-top: 1px solid #334155;">
+                            <td>TOTAL SCORE:</td>
+                            <td id="scTotalScore" style="color: var(--neon-yellow); font-size: 16px;">0080000</td>
+                        </tr>
+                    </table>
+                    <button class="arcade-btn btn-gold" id="btnNextStage">ENGAGE NEXT REGION</button>
+                </div>
+
+                <!-- Screen 5: Game Over Screen -->
+                <div class="screen-modal hidden" id="screenGameOver">
+                    <h2 style="color: var(--neon-red); margin-bottom: 12px;">SHIP DESTROYED</h2>
+                    <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">REACHED: <span id="goStageReached" style="color: #ffffff;">Stage 1</span></div>
+                    <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">FINAL SCORE: <span id="goFinalScore" style="color: var(--neon-yellow); font-weight: bold;">0000000</span></div>
+                    
+                    <button class="arcade-btn btn-gold" id="btnContinue">CONTINUE MISSION</button>
+                    <button class="arcade-btn btn-danger" id="btnQuitToTitle">ABORT TO TITLE</button>
+                    <p style="font-size: 11px; color: #64748b; margin-top: 10px;">* Using continues forfeits the 1CC Ace Badge</p>
+                </div>
+
+                <!-- Screen 6: Victory & Rolling Credits (Loop 2 Clear / 1CC) -->
+                <div class="screen-modal hidden" id="screenCredits">
+                    <h2 style="color: var(--neon-yellow); margin-bottom: 8px;">ALL ZONES LIBERATED!</h2>
+                    <div id="cred1CCBadge" style="font-size: 16px; font-weight: bold; margin-bottom: 16px;">🏆 1CC BADGE EARNED!</div>
+                    <div style="font-size: 13px; margin-bottom: 8px;">FINAL SCORE: <span id="credFinalScore" style="color: var(--neon-yellow); font-weight: bold;"></span></div>
+                    <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5; max-width: 320px; margin-bottom: 20px;">
+                        Inspired by PCE 雷電 一輪一道通關 / Raiden 1LOOP 1CC.<br>
+                        Thank you for playing Thunder Loop!
+                    </p>
+                    <button class="arcade-btn btn-gold" id="btnRestartAfterCredits">PLAY AGAIN</button>
+                </div>
+
+                <!-- Screen 7: Pause Menu -->
+                <div class="screen-modal hidden" id="screenPause">
+                    <h2 style="color: var(--neon-blue); margin-bottom: 16px;">MISSION PAUSED</h2>
+                    <button class="arcade-btn btn-gold" id="btnResume">RESUME FLIGHT</button>
+                    <button class="arcade-btn" id="btnRecalibrateTilt">RECALIBRATE TILT</button>
+                    <button class="arcade-btn" id="btnToggleSteering">STEERING: TILT (GYRO)</button>
+                    <button class="arcade-btn" id="btnToggleAutoFire">AUTO-FIRE: ON</button>
+                    <button class="arcade-btn" id="btnRestartStage">RESTART STAGE</button>
+                    <button class="arcade-btn btn-danger" id="btnQuitFromPause">QUIT TO TITLE</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Desktop Right Bezel: Weapon Systems & Stage Registry -->
+        <aside class="arcade-bezel">
+            <div>
+                <div class="bezel-title">Arsenal & Regions</div>
+                <div class="bezel-box">
+                    <h4>Primary Weapons</h4>
+                    <p><strong style="color: #ef4444;">[V] Vulcan Spread:</strong> Fan shot up to 5 streams. Upgrades widen arc.</p>
+                    <p><strong style="color: #38bdf8;">[L] Piercing Laser:</strong> Pierces through multiple enemies and boss armor.</p>
+                    <p style="font-size: 11px; color: #94a3b8; margin-top: 4px;">* Switching weapons preserves current power level!</p>
+                </div>
+                <div class="bezel-box">
+                    <h4>Add-on & Defense</h4>
+                    <p><strong style="color: #eab308;">[M] Homing Missiles:</strong> Seeks off-axis ground targets & air scouts.</p>
+                    <p><strong style="color: #22c55e;">[B] Mega Bomb:</strong> Destroys screen bullets, grants 1.5s invincibility.</p>
+                </div>
+                <div class="bezel-box">
+                    <h4>8 Distinct Regions</h4>
+                    <p style="font-size: 11px; line-height: 1.4;">
+                        1. Coastal Strike (Leviathan)<br>
+                        2. Desert Convoy (Sandstrider)<br>
+                        3. City Ruins (Sky Fortress)<br>
+                        4. Jungle Canopy (Hydra Walker)<br>
+                        5. Industrial Complex (Foundry Core)<br>
+                        6. Mountain Citadel (Guardian)<br>
+                        7. Orbital Platform (Satellite Array)<br>
+                        8. Command Center (Overlord Mk-II)
+                    </p>
+                </div>
+            </div>
+            <div style="font-size: 11px; text-align: center; color: #64748b;">
+                Loop 2: Faster bullets + Revenge death shots
+            </div>
+        </aside>
+    </div>
+
+    <!-- Self-contained Game Scripts (No web server required, works directly via file://) -->
+    <script src="audio.js"></script>
+    <script src="sprites.js"></script>
+    <script src="stages.js"></script>
+    <script src="game.js"></script>
+
+    <!-- UI Event Wiring Script -->
+    <script>
+        function setupUI() {
+            const game = window.initGame ? window.initGame() : window.game;
+            if (!game) return;
+
+            // Start Game
+            const startBtn = document.getElementById('btnStartGame');
+            const onStartGame = (e) => {
+                if (e) e.preventDefault();
+                const g = window.initGame ? window.initGame() : window.game;
+                if (g && g.requestMotionPermission) {
+                    g.requestMotionPermission();
+                }
+                g.isPracticeMode = false;
+                g.startNewGame(1);
+            };
+            startBtn.addEventListener('click', onStartGame);
+            startBtn.addEventListener('touchend', onStartGame);
+
+            // Difficulty toggle: easy -> normal -> hard
+            const diffBtn = document.getElementById('btnDifficulty');
+            diffBtn.addEventListener('click', () => {
+                const g = window.game;
+                if (g.difficulty === 'easy') {
+                    g.difficulty = 'normal';
+                } else if (g.difficulty === 'normal') {
+                    g.difficulty = 'hard';
+                } else {
+                    g.difficulty = 'easy';
+                }
+                diffBtn.textContent = `DIFFICULTY: ${g.difficulty.toUpperCase()}`;
+            });
+
+            // Practice Mode / Stage Select
+            document.getElementById('btnPracticeMode').addEventListener('click', () => {
+                document.getElementById('screenTitle').classList.add('hidden');
+                const practiceModal = document.getElementById('screenPractice');
+                const listContainer = document.getElementById('practiceStageButtons');
+                listContainer.innerHTML = '';
+
+                const maxUnlocked = parseInt(localStorage.getItem('thunderloop_unlocked') || '1', 10);
+                for (let i = 1; i <= 8; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'arcade-btn';
+                    const stageName = STAGES[i - 1].name;
+                    if (i <= maxUnlocked) {
+                        btn.textContent = `STAGE ${i}: ${stageName.toUpperCase()}`;
+                        btn.addEventListener('click', () => {
+                            practiceModal.classList.add('hidden');
+                            if (window.game && window.game.requestMotionPermission) {
+                                window.game.requestMotionPermission();
+                            }
+                            window.game.isPracticeMode = true;
+                            window.game.startNewGame(i);
+                        });
+                    } else {
+                        btn.textContent = `STAGE ${i}: [LOCKED]`;
+                        btn.style.opacity = '0.5';
+                        btn.style.cursor = 'not-allowed';
+                    }
+                    listContainer.appendChild(btn);
+                }
+                practiceModal.classList.remove('hidden');
+            });
+
+            document.getElementById('btnBackFromPractice').addEventListener('click', () => {
+                document.getElementById('screenPractice').classList.add('hidden');
+                document.getElementById('screenTitle').classList.remove('hidden');
+            });
+
+            // How to Play
+            document.getElementById('btnHowToPlay').addEventListener('click', () => {
+                document.getElementById('screenTitle').classList.add('hidden');
+                document.getElementById('screenHowToPlay').classList.remove('hidden');
+            });
+
+            document.getElementById('btnCloseHowTo').addEventListener('click', () => {
+                document.getElementById('screenHowToPlay').classList.add('hidden');
+                document.getElementById('screenTitle').classList.remove('hidden');
+            });
+
+            // CRT Scanlines Toggle
+            const crtBtn = document.getElementById('btnToggleCrt');
+            const cabinet = document.getElementById('cabinetWrapper');
+            crtBtn.addEventListener('click', () => {
+                cabinet.classList.toggle('crt-disabled');
+                const isEnabled = !cabinet.classList.contains('crt-disabled');
+                crtBtn.textContent = `CRT FILTER: ${isEnabled ? 'ON' : 'OFF'}`;
+            });
+
+            // Audio Toggle
+            const soundBtn = document.getElementById('btnToggleSound');
+            soundBtn.addEventListener('click', () => {
+                if (window.audio) {
+                    const isMuted = window.audio.toggleMute();
+                    soundBtn.textContent = `AUDIO: ${isMuted ? 'MUTED' : 'ON'}`;
+                }
+            });
+
+            // Stage Clear Advance
+            document.getElementById('btnNextStage').addEventListener('click', () => {
+                window.game.advanceNextStage();
+            });
+
+            // Game Over Continue
+            document.getElementById('btnContinue').addEventListener('click', () => {
+                window.game.continueGame();
+            });
+
+            document.getElementById('btnQuitToTitle').addEventListener('click', () => {
+                document.getElementById('screenGameOver').classList.add('hidden');
+                document.getElementById('screenTitle').classList.remove('hidden');
+                window.game.state = 'title';
+            });
+
+            // Victory Credits Restart
+            document.getElementById('btnRestartAfterCredits').addEventListener('click', () => {
+                document.getElementById('screenCredits').classList.add('hidden');
+                document.getElementById('screenTitle').classList.remove('hidden');
+                window.game.state = 'title';
+            });
+
+            // Pause Menu buttons
+            document.getElementById('btnResume').addEventListener('click', () => {
+                window.game.resumeGame();
+            });
+
+            // Steering Mode Toggles (Title & Pause)
+            const titleSteeringBtn = document.getElementById('btnToggleSteeringTitle');
+            if (titleSteeringBtn) {
+                titleSteeringBtn.addEventListener('click', () => {
+                    if (window.game) window.game.toggleSteeringMode();
+                });
+            }
+
+            const pauseSteeringBtn = document.getElementById('btnToggleSteering');
+            if (pauseSteeringBtn) {
+                pauseSteeringBtn.addEventListener('click', () => {
+                    if (window.game) window.game.toggleSteeringMode();
+                });
+            }
+
+            // Recalibrate Tilt Button in Pause Menu
+            const recalibrateBtn = document.getElementById('btnRecalibrateTilt');
+            if (recalibrateBtn) {
+                recalibrateBtn.addEventListener('click', () => {
+                    if (window.game) {
+                        window.game.recalibrateTilt(false);
+                        const originalText = recalibrateBtn.textContent;
+                        recalibrateBtn.textContent = '✓ RECALIBRATED!';
+                        recalibrateBtn.style.borderColor = '#22c55e';
+                        recalibrateBtn.style.color = '#22c55e';
+                        setTimeout(() => {
+                            recalibrateBtn.textContent = originalText;
+                            recalibrateBtn.style.borderColor = '';
+                            recalibrateBtn.style.color = '';
+                        }, 1200);
+                    }
+                });
+            }
+
+            const autoFireBtn = document.getElementById('btnToggleAutoFire');
+            autoFireBtn.addEventListener('click', () => {
+                window.game.autoFire = !window.game.autoFire;
+                autoFireBtn.textContent = `AUTO-FIRE: ${window.game.autoFire ? 'ON' : 'OFF'}`;
+            });
+
+            document.getElementById('btnRestartStage').addEventListener('click', () => {
+                window.game.resumeGame();
+                window.game.loadStage(window.game.currentStageIndex);
+            });
+
+            document.getElementById('btnQuitFromPause').addEventListener('click', () => {
+                document.getElementById('screenPause').classList.add('hidden');
+                document.getElementById('screenTitle').classList.remove('hidden');
+                window.game.state = 'title';
+                if (window.audio) window.audio.stopMusic();
+            });
+
+            if (window.game && window.game.updateSteeringUI) {
+                window.game.updateSteeringUI();
+            }
+
+            // Tap anywhere on title unlock banner for iPhone audio & tilt sensor
+            const unlockBanner = document.getElementById('audioUnlockBanner');
+            if (unlockBanner) {
+                const onUnlockTap = () => {
+                    if (window.audio) {
+                        window.audio.init();
+                        window.audio.resume();
+                    }
+                    if (window.game && window.game.requestMotionPermission) {
+                        window.game.requestMotionPermission();
+                    }
+                };
+                unlockBanner.addEventListener('click', onUnlockTap);
+                unlockBanner.addEventListener('touchend', onUnlockTap);
+            }
+        }
+
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            setupUI();
+        } else {
+            document.addEventListener('DOMContentLoaded', setupUI);
+        }
+    </script>
+</body>
+</html>

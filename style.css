@@ -1,0 +1,403 @@
+/* Thunder Loop - Retro Arcade Shmup Stylesheet */
+/* Responsive layout supporting Desktop widescreen bezel and iPhone mobile viewport */
+
+:root {
+    --bg-dark: #090d16;
+    --bezel-bg: #111827;
+    --bezel-border: #1f2937;
+    --neon-blue: #38bdf8;
+    --neon-red: #ef4444;
+    --neon-yellow: #facc15;
+    --neon-green: #22c55e;
+    --text-primary: #f8fafc;
+    --text-muted: #94a3b8;
+    --font-arcade: 'Courier New', Courier, monospace;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: var(--font-arcade);
+    overflow: hidden;
+    touch-action: none;
+}
+
+/* Master Container */
+#appContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    background: radial-gradient(circle at center, #172554 0%, #030712 100%);
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* Desktop Arcade Side Bezel (Left & Right) */
+.arcade-bezel {
+    display: none; /* Shown on larger desktop screens */
+    flex-direction: column;
+    justify-content: space-between;
+    width: 260px;
+    height: 94%;
+    max-height: 860px;
+    background: var(--bezel-bg);
+    border: 2px solid var(--bezel-border);
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7);
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.5;
+    z-index: 10;
+}
+
+@media (min-width: 1040px) {
+    .arcade-bezel {
+        display: flex;
+    }
+}
+
+.bezel-title {
+    color: var(--neon-blue);
+    font-size: 15px;
+    font-weight: bold;
+    border-bottom: 2px solid var(--neon-blue);
+    padding-bottom: 6px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.bezel-box {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 12px;
+}
+
+.bezel-box h4 {
+    color: var(--neon-yellow);
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+
+.key-badge {
+    display: inline-block;
+    background: #334155;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #475569;
+    margin-right: 4px;
+}
+
+/* Central Arcade Cabinet Frame */
+#cabinetWrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    height: 100dvh;
+    max-height: 940px;
+    aspect-ratio: 720 / 1080;
+    margin: 0 16px;
+    background: #000000;
+    border: 3px solid #1e293b;
+    box-shadow: 0 0 35px rgba(56, 189, 248, 0.2), inset 0 0 15px rgba(0, 0, 0, 0.9);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+@media (max-width: 600px) {
+    #cabinetWrapper {
+        margin: 0;
+        border: none;
+        border-radius: 0;
+        width: 100%;
+        max-height: none;
+    }
+}
+
+/* Screen orientation portrait preservation during device tilt */
+@media (max-width: 900px) and (orientation: landscape) {
+    #cabinetWrapper {
+        height: 100vh;
+        height: 100dvh;
+        width: auto;
+        aspect-ratio: 720 / 1080;
+        margin: 0 auto;
+    }
+}
+
+/* Canvas & Viewport Area */
+#canvasWrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #000000;
+}
+
+#gameCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    image-rendering: auto;
+}
+
+/* CRT Scanlines and Vignette Overlay */
+.crt-overlay {
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.12) 50%),
+                radial-gradient(circle at center, transparent 75%, rgba(0, 0, 0, 0.4) 100%);
+    background-size: 100% 3px, 100% 100%;
+    z-index: 5;
+}
+
+.crt-disabled .crt-overlay {
+    display: none;
+}
+
+/* Heads-Up Display (HUD) */
+#hudOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    pointer-events: none;
+    z-index: 20;
+    font-size: 12px;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px #000000, 0 0 6px rgba(0,0,0,0.8);
+}
+
+.hud-row-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 4px;
+}
+
+.hud-score-box {
+    display: flex;
+    flex-direction: column;
+}
+
+.hud-label {
+    font-size: 10px;
+    color: var(--neon-blue);
+    letter-spacing: 0.5px;
+}
+
+.hud-val {
+    font-size: 15px;
+    color: #ffffff;
+    letter-spacing: 1px;
+}
+
+.hud-row-mid {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    font-size: 11px;
+    color: var(--neon-yellow);
+}
+
+.hud-row-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-top: 4px;
+}
+
+.hud-stock {
+    font-size: 16px;
+    letter-spacing: 2px;
+}
+
+#btnPause {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    pointer-events: auto;
+    width: 32px;
+    height: 32px;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    color: #ffffff;
+    font-size: 14px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 30;
+}
+
+/* Modals & Screens (Title, Stage Clear, Game Over, Credits, Pause, Options) */
+.screen-modal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(3, 7, 18, 0.88);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+    text-align: center;
+    z-index: 40;
+    transition: opacity 0.25s ease;
+}
+
+.screen-modal.hidden {
+    display: none;
+    opacity: 0;
+}
+
+.game-title {
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #f8fafc;
+    text-shadow: 0 0 15px var(--neon-blue), 0 0 30px #0284c7;
+    margin-bottom: 6px;
+}
+
+.game-subtitle {
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--neon-yellow);
+    margin-bottom: 24px;
+}
+
+.arcade-btn {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    border: 2px solid var(--neon-blue);
+    color: #ffffff;
+    font-family: var(--font-arcade);
+    font-size: 13px;
+    font-weight: bold;
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 5px 0;
+    width: 250px;
+    max-width: 90vw;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    transition: all 0.15s ease;
+}
+
+.arcade-btn:hover {
+    background: #0284c7;
+    border-color: #ffffff;
+    box-shadow: 0 0 15px var(--neon-blue);
+    transform: translateY(-2px);
+}
+
+.arcade-btn:active {
+    transform: translateY(1px);
+}
+
+.arcade-btn.btn-danger {
+    border-color: var(--neon-red);
+}
+
+.arcade-btn.btn-danger:hover {
+    background: #dc2626;
+    box-shadow: 0 0 15px var(--neon-red);
+}
+
+.arcade-btn.btn-gold {
+    border-color: var(--neon-yellow);
+    color: var(--neon-yellow);
+}
+
+.arcade-btn.btn-gold:hover {
+    background: #ca8a04;
+    color: #ffffff;
+    box-shadow: 0 0 15px var(--neon-yellow);
+}
+
+/* Modal Info Boxes */
+.stats-table {
+    width: 100%;
+    max-width: 280px;
+    margin: 16px 0;
+    font-size: 13px;
+    border-collapse: collapse;
+}
+
+.stats-table td {
+    padding: 6px 4px;
+}
+
+.stats-table td:first-child {
+    text-align: left;
+    color: var(--text-muted);
+}
+
+.stats-table td:last-child {
+    text-align: right;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+/* Mobile Quick Controls Bar */
+.mobile-help-text {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 14px;
+    line-height: 1.4;
+}
+
+/* Audio Unlock Banner for iPhone Safari */
+#audioUnlockBanner {
+    position: absolute;
+    bottom: 12px;
+    font-size: 11px;
+    color: var(--neon-green);
+    animation: blinkText 1.2s infinite;
+}
+
+@keyframes blinkText {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
